@@ -1,0 +1,11 @@
+accelerate
+bitsandbytes
+compel
+controlnet-aux 
+diffusers 
+gradio
+peft
+opencv-python-headless
+torch
+torchvision
+transformers
