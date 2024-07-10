@@ -2,7 +2,7 @@
 
 ## Description
 
-This repo is designed to be a boilerplate for diffusers based diffusion pipelines
+This repo is designed to be a boilerplate for diffusers based diffusion pipelines.
 
 It relies on LoRAs and Controlnets to do so.
 
