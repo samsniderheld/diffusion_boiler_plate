@@ -2,7 +2,8 @@ accelerate
 bitsandbytes
 compel
 controlnet-aux 
-diffusers 
+diffusers
+flask 
 gradio
 peft
 opencv-python-headless

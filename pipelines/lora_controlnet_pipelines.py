@@ -24,7 +24,7 @@ from diffusers.utils import load_image
 
 class SDXL_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
-    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, use_distributed=False):
+    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, use_ip_adapter=False, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
@@ -34,6 +34,7 @@ class SDXL_Pipeline():
             "diffusers/controlnet-depth-sdxl-1.0": "depth_midas",
             "diffusers/controlnet-canny-sdxl-1.0": "canny"
         }
+        self.use_ip_adapter = use_ip_adapter
         self.use_refiner = use_refiner
         self.use_distributed = use_distributed
         self.controlnets = []
@@ -76,6 +77,9 @@ class SDXL_Pipeline():
                 lora_filename = lora['filename']
                 self.pipeline.load_lora_weights(lora_model_id, weight_name=lora_filename, adapter_name=lora_model_id)
 
+        if(self.use_ip_adapter):
+           self.pipeline.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin") 
+
         self.compel = Compel(
             tokenizer=[self.pipeline.tokenizer, self.pipeline.tokenizer_2] ,
             text_encoder=[self.pipeline.text_encoder, self.pipeline.text_encoder_2],
@@ -102,14 +106,15 @@ class SDXL_Pipeline():
       gc.collect()
       torch.cuda.empty_cache()
 
-    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024):
+    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6):
         """generates an image based on the given prompts and control parameters"""
         # Check that the sizes of the controlnets, images, and controlnet_scale match
         if len(self.controlnets) != len(controlnet_scale):
             raise ValueError("The sizes of the controlnets, images, and controlnet_scale must match")
         
-        if len(self.additional_loras) != len(lora_weights):
-            raise ValueError("The sizes of the additional_loras and lora_weights must match")
+        if(self.additional_loras):
+          if len(self.additional_loras) != len(lora_weights):
+              raise ValueError("The sizes of the additional_loras and lora_weights must match")
 
         #deterministic seed
         if seed is None:
@@ -135,24 +140,46 @@ class SDXL_Pipeline():
 
         negative_conditioning, negative_pooled = self.compel(negative_prompt)
 
+        if(self.use_ip_adapter):
+            self.pipeline.set_ip_adapter_scale(ip_adapter_weights)
+
         # generate image
         start_time = time.time()
 
-        image = self.pipeline(
-            prompt_embeds=conditioning,
-            pooled_prompt_embeds=pooled,
-            negative_prompt_embeds=negative_conditioning,
-            negative_pooled_prompt_embeds=negative_pooled,
-            num_inference_steps=steps,
-            image=images, 
-            generator=generator,
-            content_guidance_scale=cfg,
-            controlnet_conditioning_scale=controlnet_scale,
-            control_guidance_start = control_guidance_start,
-            control_guidance_end = control_guidance_end,
-            width=width,
-            height=height
-        ).images[0]
+        if(self.use_ip_adapter):
+            image = self.pipeline(
+                prompt_embeds=conditioning,
+                pooled_prompt_embeds=pooled,
+                negative_prompt_embeds=negative_conditioning,
+                negative_pooled_prompt_embeds=negative_pooled,
+                num_inference_steps=steps,
+                image=images, 
+                ip_adapter_image=controlnet_image,
+                generator=generator,
+                content_guidance_scale=cfg,
+                controlnet_conditioning_scale=controlnet_scale,
+                control_guidance_start = control_guidance_start,
+                control_guidance_end = control_guidance_end,
+                width=width,
+                height=height
+            ).images[0]
+        
+        else:
+            image = self.pipeline(
+                prompt_embeds=conditioning,
+                pooled_prompt_embeds=pooled,
+                negative_prompt_embeds=negative_conditioning,
+                negative_pooled_prompt_embeds=negative_pooled,
+                num_inference_steps=steps,
+                image=images, 
+                generator=generator,
+                content_guidance_scale=cfg,
+                controlnet_conditioning_scale=controlnet_scale,
+                control_guidance_start = control_guidance_start,
+                control_guidance_end = control_guidance_end,
+                width=width,
+                height=height
+            ).images[0]
 
         end_time = time.time()
 

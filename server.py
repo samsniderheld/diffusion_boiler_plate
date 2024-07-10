@@ -2,18 +2,10 @@ from flask import Flask, request, send_file
 import os
 from io import BytesIO
 
-import json
-import os
 import random
 
-import torch
-import matplotlib.pyplot as plt
-import numpy as np
-
 from pathlib import Path
-from PIL import Image
 from pipelines.lora_controlnet_pipelines import SDXL_Pipeline
-from pipelines.sr_pipeline import SR_Pipeline
 
 base_path = "stabilityai/stable-diffusion-xl-base-1.0"
 additional_controlnet_paths = [
@@ -88,19 +80,6 @@ def upload_and_respond():
     )
 
     base_image.save(file_path)
-
-    # refined_image = pipe.refine_image(
-    #   prompt = base_prompt,
-    #   negative_prompt = negative_prompt,
-    #   image=base_image,
-    #   cfg=cfg,
-    #   steps=refine_1_steps,
-    #   strength=refine_1_str,
-    #   seed = seed
-    # )
-
-    # refined_image.save(file_path)
-
 
     # Read the file back into memory to send it as a response
     with open(file_path, 'rb') as f:
