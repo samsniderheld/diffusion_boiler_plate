@@ -231,10 +231,11 @@ class SDXL_Pipeline():
 
 class SD15_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
-    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_distributed=False):
+    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
+        self.use_refiner = use_refiner
         self.controlnet_preprocessors = {
 
             "lllyasviel/sd-controlnet-depth": "depth_midas",
@@ -280,6 +281,19 @@ class SD15_Pipeline():
             text_encoder=self.pipeline.text_encoder,
             truncate_long_prompts=True
         )
+
+        if self.use_refiner:
+
+            self.ref_pipeline = AutoPipelineForImage2Image.from_pretrained(
+                "stabilityai/stable-diffusion-xl-refiner-1.0", torch_dtype=torch.float16, variant="fp16", use_safetensors=True
+            )
+
+            self.ref_pipeline.enable_vae_tiling()
+
+            if self.use_distributed:
+                self.ref_pipeline.to("cuda:1")
+            else:
+                self.ref_pipeline.to("cuda")
 
 
     def flush(self):
