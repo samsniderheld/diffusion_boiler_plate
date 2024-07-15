@@ -12,6 +12,7 @@ import json
 import random
 import time
 import torch
+import transformers
 
 from compel import Compel, ReturnedEmbeddingsType
 from controlnet_aux.processor import Processor
@@ -23,7 +24,7 @@ from RealESRGAN import RealESRGAN
 
 class SDXL_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
-    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, use_distributed=False):
+    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, clip_skip=0, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
@@ -34,6 +35,7 @@ class SDXL_Pipeline():
             "diffusers/controlnet-canny-sdxl-1.0": "canny"
         }
         self.use_refiner = use_refiner
+        self.clip_skip = clip_skip
         self.use_distributed = use_distributed
         self.controlnets = []
 
@@ -46,13 +48,34 @@ class SDXL_Pipeline():
 
         # vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
 
-        #load pipeline
-        self.pipeline = StableDiffusionXLControlNetInpaintPipeline.from_pretrained(
-            self.base_pipeline_path, 
-            controlnet=self.controlnets, 
-            torch_dtype=torch.float16,
-            # vae=vae,
-        )
+        if(self.clip_skip != 0): 
+            # Load the CLIP text encoder from the stable diffusion 1.5 pipeline,
+            # and specify the number of layers to use.
+            text_encoder = transformers.CLIPTextModel.from_pretrained(
+                "runwayml/stable-diffusion-v1-5",
+                subfolder = "text_encoder",
+                num_hidden_layers = 12 - (self.clip_skip - 1),
+                torch_dtype = torch.float16
+            )
+
+
+            #load pipeline
+            self.pipeline = StableDiffusionXLControlNetInpaintPipeline.from_pretrained(
+                self.base_pipeline_path, 
+                controlnet=self.controlnets, 
+                torch_dtype=torch.float16,
+                text_encoder=text_encoder
+                # vae=vae,
+            )
+
+        else:
+            #load pipeline
+            self.pipeline = StableDiffusionXLControlNetInpaintPipeline.from_pretrained(
+                self.base_pipeline_path, 
+                controlnet=self.controlnets, 
+                torch_dtype=torch.float16,
+                # vae=vae,
+            )
 
         self.pipeline.scheduler =  DPMSolverMultistepScheduler.from_config(
             self.pipeline.scheduler.config, 
@@ -117,8 +140,8 @@ class SDXL_Pipeline():
 
         generator = torch.Generator(device='cuda').manual_seed(seed)
         controlnet_image = load_image(controlnet_image_path)
-        bg_image = load_image(bg_image_path)
-        mask_image = load_image(mask_image_path)
+        bg_image = load_image(bg_image_path).resize((width,height))
+        mask_image = load_image(mask_image_path).resize((width,height))
         images = []
 
         # prepare controlnet images
@@ -231,7 +254,7 @@ class SDXL_Pipeline():
 
 class SD15_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
-    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, use_distributed=False):
+    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, clip_skip=0, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
@@ -241,6 +264,7 @@ class SD15_Pipeline():
             "lllyasviel/sd-controlnet-depth": "depth_midas",
             "lllyasviel/sd-controlnet-canny": "canny"
         }
+        self.clip_skip = clip_skip
         self.use_distributed = use_distributed
         self.controlnets = []
 
@@ -252,14 +276,34 @@ class SD15_Pipeline():
                 self.controlnets.append(controlnet)
 
         # vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+        if(self.clip_skip != 0): 
+            # Load the CLIP text encoder from the stable diffusion 1.5 pipeline,
+            # and specify the number of layers to use.
+            text_encoder = transformers.CLIPTextModel.from_pretrained(
+                "runwayml/stable-diffusion-v1-5",
+                subfolder = "text_encoder",
+                num_hidden_layers = 12 - (self.clip_skip - 1),
+                torch_dtype = torch.float16
+            )
 
-        #load pipeline
-        self.pipeline = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-            self.base_pipeline_path, 
-            controlnet=self.controlnets, 
-            torch_dtype=torch.float16,
-            # vae=vae,
-        )
+
+            #load pipeline
+            self.pipeline = StableDiffusionControlNetInpaintPipeline.from_pretrained(
+                self.base_pipeline_path, 
+                controlnet=self.controlnets, 
+                torch_dtype=torch.float16,
+                text_encoder=text_encoder
+                # vae=vae,
+            )
+        else:
+
+            #load pipeline
+            self.pipeline = StableDiffusionControlNetInpaintPipeline.from_pretrained(
+                self.base_pipeline_path, 
+                controlnet=self.controlnets, 
+                torch_dtype=torch.float16,
+                # vae=vae,
+            )
 
         self.pipeline.scheduler =  DEISMultistepScheduler.from_config(self.pipeline.scheduler.config)
 
@@ -316,8 +360,8 @@ class SD15_Pipeline():
 
         generator = torch.Generator(device='cuda').manual_seed(seed)
         controlnet_image = load_image(controlnet_image_path)
-        bg_image = load_image(bg_image_path)
-        mask_image = load_image(mask_image_path)
+        bg_image = load_image(bg_image_path).resize((width,height))
+        mask_image = load_image(mask_image_path).resize((width,height))
         images = []
 
         # prepare controlnet images
