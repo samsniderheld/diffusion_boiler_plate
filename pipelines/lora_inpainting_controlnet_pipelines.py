@@ -24,7 +24,7 @@ from RealESRGAN import RealESRGAN
 
 class SDXL_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
-    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, clip_skip=0, use_distributed=False):
+    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
@@ -35,7 +35,6 @@ class SDXL_Pipeline():
             "diffusers/controlnet-canny-sdxl-1.0": "canny"
         }
         self.use_refiner = use_refiner
-        self.clip_skip = clip_skip
         self.use_distributed = use_distributed
         self.controlnets = []
 
@@ -48,34 +47,13 @@ class SDXL_Pipeline():
 
         # vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
 
-        if(self.clip_skip != 0): 
-            # Load the CLIP text encoder from the stable diffusion 1.5 pipeline,
-            # and specify the number of layers to use.
-            text_encoder = transformers.CLIPTextModel.from_pretrained(
-                "runwayml/stable-diffusion-v1-5",
-                subfolder = "text_encoder",
-                num_hidden_layers = 12 - (self.clip_skip - 1),
-                torch_dtype = torch.float16
-            )
-
-
-            #load pipeline
-            self.pipeline = StableDiffusionXLControlNetInpaintPipeline.from_pretrained(
-                self.base_pipeline_path, 
-                controlnet=self.controlnets, 
-                torch_dtype=torch.float16,
-                text_encoder=text_encoder
-                # vae=vae,
-            )
-
-        else:
-            #load pipeline
-            self.pipeline = StableDiffusionXLControlNetInpaintPipeline.from_pretrained(
-                self.base_pipeline_path, 
-                controlnet=self.controlnets, 
-                torch_dtype=torch.float16,
-                # vae=vae,
-            )
+        #load pipeline
+        self.pipeline = StableDiffusionXLControlNetInpaintPipeline.from_pretrained(
+            self.base_pipeline_path, 
+            controlnet=self.controlnets, 
+            torch_dtype=torch.float16,
+            # vae=vae,
+        )
 
         self.pipeline.scheduler =  DPMSolverMultistepScheduler.from_config(
             self.pipeline.scheduler.config, 
@@ -124,7 +102,7 @@ class SDXL_Pipeline():
       gc.collect()
       torch.cuda.empty_cache()
 
-    def generate_img(self, prompt,negative_prompt, bg_image_path, mask_image_path,controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024):
+    def generate_img(self, prompt,negative_prompt, bg_image_path, mask_image_path,controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024, clip_skip=0):
         """generates an image based on the given prompts and control parameters"""
         # Check that the sizes of the controlnets, images, and controlnet_scale match
         if len(self.controlnets) != len(controlnet_scale):
@@ -179,7 +157,8 @@ class SDXL_Pipeline():
             control_guidance_start = control_guidance_start,
             control_guidance_end = control_guidance_end,
             width=width,
-            height=height
+            height=height,
+            clip_skip=clip_skip
         ).images[0]
 
         end_time = time.time()
@@ -195,7 +174,7 @@ class SDXL_Pipeline():
         return image, params, images
     
     
-    def refine_image(self,prompt,negative_prompt, image, cfg, steps, strength=.15, seed=None):
+    def refine_image(self,prompt,negative_prompt, image, cfg, steps, strength=.15, seed=None,clip_skip=0):
         """refines an image using the refiner model"""
         if not self.use_refiner:
             raise ValueError("The refiner is not enabled")
@@ -216,6 +195,7 @@ class SDXL_Pipeline():
             generator=generator,
             content_guidance_scale=cfg,
             num_inference_steps=steps,
+            clip_skip=clip_skip
         ).images[0]
 
         end_time = time.time()
@@ -254,7 +234,7 @@ class SDXL_Pipeline():
 
 class SD15_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
-    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, clip_skip=0, use_distributed=False):
+    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=True, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
@@ -264,7 +244,6 @@ class SD15_Pipeline():
             "lllyasviel/sd-controlnet-depth": "depth_midas",
             "lllyasviel/sd-controlnet-canny": "canny"
         }
-        self.clip_skip = clip_skip
         self.use_distributed = use_distributed
         self.controlnets = []
 
@@ -276,34 +255,15 @@ class SD15_Pipeline():
                 self.controlnets.append(controlnet)
 
         # vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
-        if(self.clip_skip != 0): 
-            # Load the CLIP text encoder from the stable diffusion 1.5 pipeline,
-            # and specify the number of layers to use.
-            text_encoder = transformers.CLIPTextModel.from_pretrained(
-                "runwayml/stable-diffusion-v1-5",
-                subfolder = "text_encoder",
-                num_hidden_layers = 12 - (self.clip_skip - 1),
-                torch_dtype = torch.float16
-            )
 
 
             #load pipeline
-            self.pipeline = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-                self.base_pipeline_path, 
-                controlnet=self.controlnets, 
-                torch_dtype=torch.float16,
-                text_encoder=text_encoder
-                # vae=vae,
-            )
-        else:
-
-            #load pipeline
-            self.pipeline = StableDiffusionControlNetInpaintPipeline.from_pretrained(
-                self.base_pipeline_path, 
-                controlnet=self.controlnets, 
-                torch_dtype=torch.float16,
-                # vae=vae,
-            )
+        self.pipeline = StableDiffusionControlNetInpaintPipeline.from_pretrained(
+            self.base_pipeline_path, 
+            controlnet=self.controlnets, 
+            torch_dtype=torch.float16,
+            # vae=vae,
+        )
 
         self.pipeline.scheduler =  DEISMultistepScheduler.from_config(self.pipeline.scheduler.config)
 
@@ -344,7 +304,7 @@ class SD15_Pipeline():
       gc.collect()
       torch.cuda.empty_cache()
 
-    def generate_img(self, prompt,negative_prompt, bg_image_path, mask_image_path,controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024):
+    def generate_img(self, prompt,negative_prompt, bg_image_path, mask_image_path,controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,clip_skip=0):
         """generates an image based on the given prompts and control parameters"""
         # Check that the sizes of the controlnets, images, and controlnet_scale match
         if len(self.controlnets) != len(controlnet_scale):
@@ -397,7 +357,8 @@ class SD15_Pipeline():
             control_guidance_start = control_guidance_start,
             control_guidance_end = control_guidance_end,
             width=width,
-            height=height
+            height=height,
+            clip_skip=clip_skip
         ).images[0]
 
         end_time = time.time()
@@ -413,7 +374,7 @@ class SD15_Pipeline():
         return image, params, images
     
     
-    def refine_image(self,prompt,negative_prompt, image, cfg, steps, strength=.15, seed=None):
+    def refine_image(self,prompt,negative_prompt, image, cfg, steps, strength=.15, seed=None,clip_skip=0):
         """refines an image using the refiner model"""
         if not self.use_refiner:
             raise ValueError("The refiner is not enabled")
@@ -434,6 +395,7 @@ class SD15_Pipeline():
             generator=generator,
             content_guidance_scale=cfg,
             num_inference_steps=steps,
+            clip_skip=clip_skip
         ).images[0]
 
         end_time = time.time()
