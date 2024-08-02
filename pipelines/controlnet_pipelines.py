@@ -22,18 +22,14 @@ from diffusers import StableDiffusionXLControlNetPipeline, StableDiffusionContro
 from diffusers.models import ControlNetModel, AutoencoderKL
 from diffusers import AutoPipelineForImage2Image
 from diffusers.utils import load_image
+from controlnets import sd15_preprocessors, sdxl_preprocessors
 
 class SDXL_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
     def __init__(self, base_pipeline_path, additional_controlnet_paths=None, use_refiner=False,use_ip_adapter=False, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
-        self.controlnet_preprocessors = {
-
-            "thibaud/controlnet-openpose-sdxl-1.0": "openpose_full",
-            "diffusers/controlnet-depth-sdxl-1.0": "depth_midas",
-            "diffusers/controlnet-canny-sdxl-1.0": "canny"
-        }
+        self.controlnet_preprocessors = sdxl_preprocessors
         self.use_ip_adapter = use_ip_adapter
         self.use_refiner = use_refiner
         self.use_distributed = use_distributed
@@ -244,10 +240,7 @@ class SD15_Pipeline():
     def __init__(self, base_pipeline_path, additional_controlnet_paths=None, use_refiner=True,use_ip_adapter=False, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
-        self.controlnet_preprocessors = {
-            "lllyasviel/sd-controlnet-depth": "depth_midas",
-            "lllyasviel/sd-controlnet-canny": "canny"
-        }
+        self.controlnet_preprocessors = sd15_preprocessors
         self.use_ip_adapter = use_ip_adapter
         self.use_refiner = use_refiner
         self.use_distributed = use_distributed
