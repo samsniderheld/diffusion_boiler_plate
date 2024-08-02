@@ -1,4 +1,4 @@
-sdxl__preprocessors = {
+sdxl_preprocessors = {
     "thibaud/controlnet-openpose-sdxl-1.0": "openpose_full",
     "diffusers/controlnet-depth-sdxl-1.0": "depth_midas",
     "diffusers/controlnet-canny-sdxl-1.0": "canny",

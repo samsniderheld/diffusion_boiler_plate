@@ -7,6 +7,8 @@ The SDXL_Pipeline class provides methods to load the pipeline, generate images b
 
 The module also includes other necessary imports and helper classes used by the SDXL_Pipeline class.
 """
+import sys
+sys.path.append('..')
 
 import gc
 import json
@@ -22,7 +24,7 @@ from diffusers import StableDiffusionXLControlNetPipeline, StableDiffusionContro
 from diffusers.models import ControlNetModel, AutoencoderKL
 from diffusers import AutoPipelineForImage2Image
 from diffusers.utils import load_image
-from controlnets import sd15_preprocessors, sdxl_preprocessors
+from pipelines.controlnets import sd15_preprocessors, sdxl_preprocessors
 
 class SDXL_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
