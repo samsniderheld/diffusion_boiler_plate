@@ -28,9 +28,10 @@ from pipelines.controlnets import sd15_preprocessors, sdxl_preprocessors
 
 class SDXL_Pipeline():
     """class to house all the pipeline loading and generation functions for easy looping and iteration"""
-    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, use_refiner=False,use_ip_adapter=False, use_distributed=False):
+    def __init__(self, base_pipeline_path, additional_controlnet_paths=None, additional_loras=None, use_refiner=False,use_ip_adapter=False, use_distributed=False):
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
+        self.additional_loras = additional_loras
         self.controlnet_preprocessors = sdxl_preprocessors
         self.use_ip_adapter = use_ip_adapter
         self.use_refiner = use_refiner
@@ -68,6 +69,12 @@ class SDXL_Pipeline():
         else:
             self.pipeline.to("cuda")
 
+        if(self.additional_loras):
+            for lora in self.additional_loras:
+                lora_model_id = lora['model_id']
+                lora_filename = lora['filename']
+                self.pipeline.load_lora_weights(lora_model_id, weight_name=lora_filename, adapter_name=lora_model_id)
+
         if(self.use_ip_adapter):
            self.pipeline.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin") 
 
@@ -97,11 +104,15 @@ class SDXL_Pipeline():
       gc.collect()
       torch.cuda.empty_cache()
 
-    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6,clip_skip=0,strength=.15):
+    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6,clip_skip=0,strength=.15):
         """generates an image based on the given prompts and control parameters"""
         # Check that the sizes of the controlnets, images, and controlnet_scale match
         if len(self.controlnets) != len(controlnet_scale):
             raise ValueError("The sizes of the controlnets, images, and controlnet_scale must match")
+        
+        if(self.additional_loras):
+          if len(self.additional_loras) != len(lora_weights):
+              raise ValueError("The sizes of the additional_loras and lora_weights must match")
         
         #deterministic seed
         if seed is None:
@@ -119,6 +130,8 @@ class SDXL_Pipeline():
                 processed_image = processor(controlnet_image, to_pil=True).resize((width,height))
                 images.append(processed_image)
 
+        if (self.additional_loras) :
+            self.pipeline.set_adapters([lora['model_id'] for lora in self.additional_loras], adapter_weights=lora_weights)
 
         conditioning, pooled = self.compel(prompt)
 
