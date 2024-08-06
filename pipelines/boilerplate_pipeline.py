@@ -110,7 +110,7 @@ class Basic_Pipeline():
       gc.collect()
       torch.cuda.empty_cache()
 
-    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6,clip_skip=0,mask_image_path=None):
+    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6,clip_skip=0,img2img_str=1,mask_image_path=None):
         """generates an image based on the given prompts and control parameters"""
         # Check that the sizes of the controlnets, images, and controlnet_scale match
         if len(self.controlnets) != len(controlnet_scale):
@@ -168,6 +168,7 @@ class Basic_Pipeline():
                     width=width,
                     height=height,
                     clip_skip=clip_skip,
+                    strength=img2img_str,
                     image=controlnet_image,
                     ip_adapter_image=controlnet_image,
                     control_image=images, 
@@ -191,6 +192,7 @@ class Basic_Pipeline():
                     mask_image=mask_image,
                     control_image=images,
                     ip_adapter_image=controlnet_image,
+                    strength=img2img_str
                 ).images[0]
             else:
                 image = self.pipeline(
@@ -224,6 +226,7 @@ class Basic_Pipeline():
                     control_guidance_end = control_guidance_end,
                     width=width,
                     height=height,
+                    strength=img2img_str,
                     clip_skip=clip_skip,
                     image=controlnet_image,
                     control_image=images, 
@@ -246,6 +249,7 @@ class Basic_Pipeline():
                     image=controlnet_image,
                     mask_image=mask_image,
                     control_image=images,
+                    strength=img2img_str
                 ).images[0]
             else:
                 image = self.pipeline(
