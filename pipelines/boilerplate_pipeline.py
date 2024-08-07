@@ -8,11 +8,10 @@ import time
 import torch
 import transformers
 
-from accelerate import PartialState
 from compel import Compel, ReturnedEmbeddingsType
 from controlnet_aux.processor import Processor
 from diffusers import StableDiffusionXLControlNetPipeline, StableDiffusionControlNetPipeline, DPMSolverMultistepScheduler,StableDiffusionXLControlNetInpaintPipeline, StableDiffusionControlNetInpaintPipeline
-from diffusers.models import ControlNetModel, AutoencoderKL
+from diffusers.models import ControlNetModel
 from diffusers import AutoPipelineForImage2Image
 from diffusers.utils import load_image
 from pipelines.controlnets import sd15_preprocessors, sdxl_preprocessors
@@ -23,7 +22,6 @@ class Basic_Pipeline():
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
-        self.controlnet_preprocessors = sdxl_preprocessors
         self.use_ip_adapter = use_ip_adapter
         self.use_refiner = use_refiner
         self.img2img = img2img
@@ -39,10 +37,40 @@ class Basic_Pipeline():
                 controlnet = ControlNetModel.from_pretrained(path, torch_dtype=torch.float16)
                 self.controlnets.append(controlnet)
 
-
         if(self.sd15):
-            pass
+            self.controlnet_preprocessors = sd15_preprocessors
+
+            if(self.img2img):
+                self.pipeline = AutoPipelineForImage2Image.from_pretrained(
+                    self.base_pipeline_path, 
+                    controlnet=self.controlnets, 
+                    torch_dtype=torch.float16,
+                )
+            elif(self.inpainting):
+                self.pipeline = StableDiffusionControlNetInpaintPipeline.from_pretrained(
+                    self.base_pipeline_path, 
+                    controlnet=self.controlnets, 
+                    torch_dtype=torch.float16,
+                )
+            else:
+                self.pipeline = StableDiffusionControlNetPipeline.from_pretrained(
+                    self.base_pipeline_path, 
+                    controlnet=self.controlnets, 
+                    torch_dtype=torch.float16,
+                )
+            
+            if(self.use_ip_adapter):
+                self.pipeline.load_ip_adapter("h94/IP-Adapter", subfolder="models", weight_name="ip-adapter_sd15.bin")
+
+            self.compel = Compel(
+                tokenizer=self.pipeline.tokenizer ,
+                text_encoder=self.pipeline.text_encoder,
+                truncate_long_prompts=True
+            )
+
         else:
+            self.controlnet_preprocessors = sdxl_preprocessors
+
             if(self.img2img):
                 self.pipeline = AutoPipelineForImage2Image.from_pretrained(
                     self.base_pipeline_path, 
@@ -104,11 +132,6 @@ class Basic_Pipeline():
                 self.ref_pipeline.to("cuda:1")
             else:
                 self.ref_pipeline.to("cuda")
-
-
-    def flush(self):
-      gc.collect()
-      torch.cuda.empty_cache()
 
     def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6,clip_skip=0,img2img_str=1,mask_image_path=None, ip_adapter_img_path=None):
         """generates an image based on the given prompts and control parameters"""
@@ -344,3 +367,7 @@ class Basic_Pipeline():
         }
 
         return json.dumps(parameters, indent=4)
+    
+    def flush(self):
+      gc.collect()
+      torch.cuda.empty_cache()
