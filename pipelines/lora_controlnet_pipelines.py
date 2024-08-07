@@ -260,7 +260,7 @@ class SD15_Pipeline():
         self.base_pipeline_path = base_pipeline_path
         self.additional_controlnet_paths = additional_controlnet_paths
         self.additional_loras = additional_loras
-        self.controlnet_preprocessors = sd15_preprocessors,
+        self.controlnet_preprocessors = sd15_preprocessors
         self.use_ip_adapter = use_ip_adapter
         self.use_refiner = use_refiner
         self.use_distributed = use_distributed
