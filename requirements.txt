@@ -5,6 +5,7 @@ controlnet-aux
 diffusers
 flask 
 gradio
+mediapipe
 peft
 opencv-python-headless
 torch

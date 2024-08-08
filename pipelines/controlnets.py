@@ -8,6 +8,7 @@ sdxl_preprocessors = {
 sd15_preprocessors = {
     "lllyasviel/sd-controlnet-depth": "depth_midas",
     "lllyasviel/sd-controlnet-canny": "canny",
-    "lllyasviel/control_v11p_sd15s2_lineart_anime": "lineart_anime"
+    "lllyasviel/control_v11p_sd15s2_lineart_anime": "lineart_anime",
+    "lllyasviel/sd-controlnet-openpose" : "openpose_full"
 }
         
