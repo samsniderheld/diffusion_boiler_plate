@@ -2,6 +2,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from PIL import Image
+from PIL import ImageFilter
 
 
 class Face_Enhancer_Pipeline():
@@ -9,16 +10,16 @@ class Face_Enhancer_Pipeline():
         self.model_path = model_path
 
     def load_pipeline(self):
-        self.base_optionsbase_options = python.BaseOptions(model_asset_path=self.model_path)
+        self.base_options = python.BaseOptions(model_asset_path=self.model_path)
         self.options = vision.FaceDetectorOptions(base_options=self.base_options)
         self.detector = vision.FaceDetector.create_from_options(self.options)
 
-    def detect_face(img_path):
+    def detect_face(self,img_path):
         image = mp.Image.create_from_file(img_path)
         detection_result = self.detector.detect(image)
         return detection_result.detections[0].bounding_box
     
-    def crop_face(img_path, bounding_box, buffer):
+    def crop_face(self, img_path, bounding_box, buffer):
         start_img = Image.open(img_path)
         p1_x = bounding_box.origin_x - buffer
         p1_y = bounding_box.origin_y - buffer
@@ -29,7 +30,7 @@ class Face_Enhancer_Pipeline():
         return cropped, start_img, p1_x, p1_y
 
 
-    def enhance_face(self, img_path, buffer, pipeline, prompt,negative_prompt, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,clip_skip=0,img2img_str=1):
+    def enhance_face(self, img_path, buffer, pipeline, prompt,negative_prompt, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,clip_skip=0,img2img_str=1,feather_radius=20):
         
         bbox = self.detect_face(img_path)
         face, start_img, x,y = self.crop_face(img_path, bbox, buffer)
@@ -56,7 +57,15 @@ class Face_Enhancer_Pipeline():
 
         enhanced_face_resized = enhanced_face.resize(cropped_size)
         out_img = start_img.copy()
-        out_img.paste(enhanced_face_resized,(x,y))
+
+        # Create a mask with a feathered edge
+        mask = Image.new('L', enhanced_face_resized.size, 0)
+        mask.paste(255, (feather_radius, feather_radius, enhanced_face_resized.width - feather_radius, enhanced_face_resized.height - feather_radius))
+        mask = mask.filter(ImageFilter.GaussianBlur(feather_radius))
+
+        # Paste the enhanced image onto the out_img using the mask
+        enhanced_with_mask = Image.composite(enhanced_face_resized, out_img.crop((x, y, x + enhanced_face_resized.width, y + enhanced_face_resized.height)), mask)
+        out_img.paste(enhanced_with_mask, (x, y))
 
         
 
