@@ -30,7 +30,7 @@ class Face_Enhancer_Pipeline():
         return cropped, start_img, p1_x, p1_y
 
 
-    def enhance_face(self, img_path, buffer, pipeline, prompt,negative_prompt, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,clip_skip=0,img2img_str=1,feather_radius=20):
+    def enhance_face(self, img_path, buffer, pipeline, prompt,negative_prompt, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, clip_skip=0,img2img_str=1,feather_radius=20):
         
         bbox = self.detect_face(img_path)
         face, start_img, x,y = self.crop_face(img_path, bbox, buffer)
@@ -48,8 +48,8 @@ class Face_Enhancer_Pipeline():
             cfg = cfg,
             seed = seed,
             steps = steps,
-            width = width,
-            height = height,
+            width = face.size[0],
+            height = face.size[1],
             clip_skip = clip_skip,
             lora_weights = lora_weights,
             img2img_str = img2img_str

@@ -2,7 +2,8 @@ sdxl_preprocessors = {
     "thibaud/controlnet-openpose-sdxl-1.0": "openpose_full",
     "diffusers/controlnet-depth-sdxl-1.0": "depth_midas",
     "diffusers/controlnet-canny-sdxl-1.0": "canny",
-    "r3gm/controlnet-lineart-anime-sdxl-fp16": "lineart_anime"
+    "r3gm/controlnet-lineart-anime-sdxl-fp16": "lineart_anime",
+    "xinsir/controlnet-scribble-sdxl-1.0" : None
 }
 
 sd15_preprocessors = {

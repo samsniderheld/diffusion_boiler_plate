@@ -158,9 +158,10 @@ class Basic_Pipeline():
         if(self.additional_controlnet_paths):
             for path in self.additional_controlnet_paths:
                 processor_id = self.controlnet_preprocessors[path]
-                processor = Processor(processor_id)
-                processed_image = processor(controlnet_image, to_pil=True).resize((width,height))
-                images.append(processed_image)
+                if processor_id != None:
+                    processor = Processor(processor_id)
+                    processed_image = processor(controlnet_image, to_pil=True).resize((width,height))
+                    images.append(processed_image)
 
                 
         if (self.additional_loras) :
