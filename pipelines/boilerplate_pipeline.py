@@ -133,7 +133,7 @@ class Basic_Pipeline():
             else:
                 self.ref_pipeline.to("cuda")
 
-    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6,clip_skip=0,img2img_str=1,mask_image_path=None, ip_adapter_img_path=None):
+    def generate_img(self, prompt,negative_prompt, controlnet_image_path, controlnet_scale, control_guidance_start, control_guidance_end, lora_weights, cfg, steps, seed=None, width=1024, height=1024,ip_adapter_weights=.6,clip_skip=0,img2img_str=1, input_image_path = None, mask_image_path=None, ip_adapter_img_path=None):
         """generates an image based on the given prompts and control parameters"""
         # Check that the sizes of the controlnets, images, and controlnet_scale match
         if len(self.controlnets) != len(controlnet_scale):
@@ -174,6 +174,11 @@ class Basic_Pipeline():
         # generate image
         start_time = time.time()
 
+        if(input_image_path == None):
+            input_image = controlnet_image
+        else:
+            input_image = load_image(input_image_path).resize((width,height))
+
         if(self.use_ip_adapter):
 
             self.pipeline.set_ip_adapter_scale(ip_adapter_weights)
@@ -182,8 +187,10 @@ class Basic_Pipeline():
                 ip_adapter_img= controlnet_image
             else:
                 ip_adapter_img = load_image(ip_adapter_img_path).resize((width,height))
-                print(ip_adapter_img_path)
+
+
             if(self.img2img):
+                
                 image = self.pipeline(
                     prompt_embeds=conditioning,
                     pooled_prompt_embeds=pooled,
@@ -198,7 +205,7 @@ class Basic_Pipeline():
                     height=height,
                     clip_skip=clip_skip,
                     strength=img2img_str,
-                    image=controlnet_image,
+                    image=input_image,
                     ip_adapter_image=ip_adapter_img,
                     control_image=images, 
                 ).images[0]
@@ -217,7 +224,7 @@ class Basic_Pipeline():
                     width=width,
                     height=height,
                     clip_skip=clip_skip,
-                    image=controlnet_image,
+                    image=input_image,
                     mask_image=mask_image,
                     control_image=images,
                     ip_adapter_image=ip_adapter_img,
@@ -257,7 +264,7 @@ class Basic_Pipeline():
                     height=height,
                     strength=img2img_str,
                     clip_skip=clip_skip,
-                    image=controlnet_image,
+                    image=input_image,
                     control_image=images, 
                 ).images[0]
             elif(self.inpainting):
@@ -275,7 +282,7 @@ class Basic_Pipeline():
                     width=width,
                     height=height,
                     clip_skip=clip_skip,
-                    image=controlnet_image,
+                    image=input_image,
                     mask_image=mask_image,
                     control_image=images,
                     strength=img2img_str
