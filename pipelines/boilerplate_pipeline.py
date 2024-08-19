@@ -162,6 +162,8 @@ class Basic_Pipeline():
                     processor = Processor(processor_id)
                     processed_image = processor(controlnet_image, to_pil=True).resize((width,height))
                     images.append(processed_image)
+                else:
+                    images.append(controlnet_image)
 
                 
         if (self.additional_loras) :

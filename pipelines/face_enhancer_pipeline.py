@@ -38,6 +38,12 @@ class Face_Enhancer_Pipeline():
         face.save(cropped_file)
         cropped_size = face.size
 
+        if face.size[0] < 1024 or face.size[1] < 1024:
+            gensize = (1024,1024)
+        else:
+            gensize = (face.size[0],face.size[1])
+
+
         enhanced_face, params, control_imgs = pipeline.generate_img(
             prompt = prompt,
             negative_prompt = negative_prompt,
@@ -48,8 +54,8 @@ class Face_Enhancer_Pipeline():
             cfg = cfg,
             seed = seed,
             steps = steps,
-            width = face.size[0],
-            height = face.size[1],
+            width = gensize[0],
+            height = gensize[1],
             clip_skip = clip_skip,
             lora_weights = lora_weights,
             img2img_str = img2img_str
