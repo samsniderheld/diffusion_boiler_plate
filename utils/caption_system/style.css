@@ -1,0 +1,191 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+html, body{
+    background-color: #000;
+    transition: 0.7s ease-in;
+}
+
+div#main_wrapper{
+    width: 100%;
+    position: relative;
+}
+
+div.step{
+    width: 100%;
+    position: relative;
+    display: none;
+}
+
+.dg.ac{
+    display: none;
+    transition: 0.5s ease-in-out;
+}
+
+.boolean .property-name{
+    width: 90% !important;
+}
+
+.boolean .c{
+    width: 10% !important;
+}
+
+/* ---------------------------------------- STEP 1 ----------------------------------------*/
+
+div#drag_drop{
+    width: 900px;
+    height: 100%;
+    left: 50%;
+    margin-left: -450px;
+    display: block;
+}
+
+input#fileInput{
+    display: none;
+}
+
+div#drop_area{
+    width: 400px;
+    height: 400px;
+    top: 50px;
+    border: 3px dotted #333;
+    position: relative;
+    left: 50%;
+    margin-left: -203px;
+    transition: 0.5s ease-in-out;
+}
+
+div#drop_area p{
+    width: 100%;
+    text-align: center;
+    top: 50%;
+    pointer-events: none;
+    position: relative;
+
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+
+    color: #666;
+    font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+div.highlight{
+    border-color: #FFF !important;
+}
+
+div.highlight p{
+    color: #FFF !important;
+    font-size: 20px !important;
+}
+
+div#thumb_droped_img{
+    width: 475px;
+    height: 700px;
+    position: absolute;
+    top: 50px;
+    left: 425px;
+    overflow: scroll;
+    opacity: 0;
+    transition: 0.5s ease-in-out 0.5s;
+}
+
+div#thumb_droped_img img{
+    width: 100px;
+    margin: 5px;
+}
+
+/* ---------------------------------------- STEP 2 ----------------------------------------*/
+
+div#caption_title{
+    position: fixed;
+    width: 222px;
+    height: 27px;
+    right: 15px;
+    top: 0;
+    background-color: #1a1a1a;
+    padding:0 10px;
+    color: #eee;
+    font: 11px 'Lucida Grande', sans-serif;
+    border-left: 3px solid #00ff6a;
+}
+
+div#caption_title p{
+    line-height: 27px;
+}
+
+textarea#labels_txt{
+    right: 15px;
+    top: 27px;
+    width: 222px;
+    height: 100px;
+    padding: 10px;
+    border: none;
+    background: #313131;
+    position: fixed;
+    color: #FFF;
+    resize: none;
+    border-left: 3px solid #00ff6a;
+    font: 11px 'Lucida Grande', sans-serif;
+    color: #00ff6a;
+    outline: none;
+}
+
+div#all_preview_wrapper{
+    width: 1600px;
+    margin: 0 auto;
+    position: relative;
+}
+
+div#all_preview_wrapper img{
+    max-width: 400px;
+    float: left;
+}
+
+.dg .boolean.selected{
+    background-color: #007430;
+}
+
+.dg .boolean.selected:hover{
+    background-color: #007430 !important;
+}
+
+/* ---------------------------------------- STEP 3 ----------------------------------------*/
+
+div#carousel{
+    width: 100%;
+    position: absolute;
+}
+
+div#main_imag{
+    width: 600px;
+    left: 50%;
+    margin-left: -300px;
+    top: 30px;
+    position: fixed;
+}
+
+div#main_imag img{
+    width: 600px;
+}
+
+div#thumbnails{
+    width: 450px;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 10px;
+}
+
+.captioned{
+    border-color: #00ff6a !important;
+}
+
+div#thumbnails img{
+    max-width: 100px;
+    margin: 5px 5px 0 5px;
+    cursor: pointer;
+    border: 1px solid #343846;
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caption Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="dat.gui.js"></script>
+    <script type="text/javascript" src="jquery.js"></script>
+</head>
+<body>
+<div id="main_wrapper">
+    <div class="step" id="drag_drop">
+        <input type="file" id="fileInput" />
+        <div id="thumb_droped_img"></div>
+        <div id="drop_area"><p>Drop all image files here ↓</p></div>
+    </div>
+    <div class="step" id="attr_list">
+        <div id="all_preview_wrapper"></div>
+        <div id="caption_title"><p>Caption labels (CSV):</p></div>
+        <textarea name="labels" id="labels_txt"></textarea>
+    </div>
+    <div class="step" id="img_capt">
+        <div id="carousel">
+            <div id="main_imag"></div>
+            <div id="thumbnails"></div>
+        </div>
+    </div>
+</div>
+<script src="main.js"></script>
+</body>
+</html>
